@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RakshaNet: SOS Safety Network</title>
+  <meta name="description" content="One-tap SOS, safe-walk check-ins and a tamper-evident incident ledger you can anchor with your wallet.">
+  <meta name="theme-color" content="#0f1115">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#sos" aria-label="RakshaNet home">
+      <img src="assets/logo.svg" alt="" width="32" height="32">
+      <span>Raksha<b>Net</b></span>
+    </a>
+    <div class="topbar-actions">
+      <span id="net-status" class="pill" title="Connection status">Online</span>
+      <button id="wallet-btn" class="btn btn-ghost btn-sm" type="button">Connect wallet</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- SOS -->
+    <section id="view-sos" class="view" data-view="sos">
+      <div class="sos-wrap">
+        <p class="eyebrow">Emergency</p>
+        <h1>Hold to send SOS</h1>
+        <p class="muted">Hold the button for 1.5 seconds. Your live location goes to your guardians and the alert is sealed into your evidence ledger.</p>
+        <button id="sos-btn" class="sos-btn" type="button" aria-describedby="sos-hint">
+          <svg class="sos-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56"></circle></svg>
+          <span class="sos-label">SOS</span>
+        </button>
+        <p id="sos-hint" class="hint">Keyboard: focus and hold Space or Enter</p>
+        <label class="field">
+          <span>Optional note (who, what, where)</span>
+          <input id="sos-note" type="text" maxlength="200" placeholder="e.g. Being followed near MG Road metro">
+        </label>
+        <div class="quick-row">
+          <a class="btn btn-outline" href="tel:112">Call 112</a>
+          <a class="btn btn-outline" href="tel:1091">Women helpline 1091</a>
+        </div>
+        <p id="guardian-summary" class="muted small"></p>
+      </div>
+    </section>
+
+    <!-- SAFE WALK -->
+    <section id="view-walk" class="view" data-view="walk" hidden>
+      <p class="eyebrow">Safe Walk</p>
+      <h1>Check in or we raise the alarm</h1>
+      <p class="muted">Start a timer before you head out. If you don't tap <b>I'm safe</b> before it runs out, RakshaNet sends an SOS for you.</p>
+      <div id="walk-setup" class="card">
+        <label class="field">
+          <span>Where are you going?</span>
+          <input id="walk-dest" type="text" maxlength="120" placeholder="e.g. Home, via Indiranagar 12th Main">
+        </label>
+        <div class="chips" role="group" aria-label="Duration">
+          <button class="chip" type="button" data-min="5">5 min</button>
+          <button class="chip is-active" type="button" data-min="15">15 min</button>
+          <button class="chip" type="button" data-min="30">30 min</button>
+          <button class="chip" type="button" data-min="60">60 min</button>
+        </div>
+        <button id="walk-start" class="btn btn-primary btn-block" type="button">Start Safe Walk</button>
+      </div>
+      <div id="walk-active" class="card walk-active" hidden>
+        <p class="muted small" id="walk-dest-label"></p>
+        <div id="walk-timer" class="walk-timer" role="timer" aria-live="off">15:00</div>
+        <div class="progress"><div id="walk-progress"></div></div>
+        <div class="quick-row">
+          <button id="walk-safe" class="btn btn-safe" type="button">I'm safe</button>
+          <button id="walk-extend" class="btn btn-outline" type="button">+5 min</button>
+          <button id="walk-panic" class="btn btn-danger" type="button">SOS now</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEDGER -->
+    <section id="view-ledger" class="view" data-view="ledger" hidden>
+      <p class="eyebrow">Evidence Ledger</p>
+      <h1>Tamper-evident incident log</h1>
+      <p class="muted">Every alert and check-in is SHA-256 hashed and linked to the previous record. Change one byte anywhere and verification fails. Sign the latest hash with your wallet to prove when it existed.</p>
+      <div class="toolbar">
+        <button id="ledger-verify" class="btn btn-primary btn-sm" type="button">Verify chain</button>
+        <button id="ledger-anchor" class="btn btn-outline btn-sm" type="button">Sign head with wallet</button>
+        <button id="ledger-tamper" class="btn btn-ghost btn-sm" type="button">Run tamper test</button>
+        <button id="ledger-export" class="btn btn-ghost btn-sm" type="button">Export JSON</button>
+      </div>
+      <div id="ledger-status" class="status" role="status" aria-live="polite"></div>
+      <ol id="ledger-list" class="ledger" reversed></ol>
+    </section>
+
+    <!-- GUARDIANS -->
+    <section id="view-guardians" class="view" data-view="guardians" hidden>
+      <p class="eyebrow">Guardians</p>
+      <h1>Who gets your alerts</h1>
+      <form id="guardian-form" class="card form-grid" autocomplete="off">
+        <label class="field">
+          <span>Your name (shown in alerts)</span>
+          <input id="me-name" type="text" maxlength="60" placeholder="Your name">
+        </label>
+        <label class="field">
+          <span>Guardian name</span>
+          <input id="g-name" type="text" maxlength="60" required placeholder="e.g. Amma">
+        </label>
+        <label class="field">
+          <span>Phone with country code</span>
+          <input id="g-phone" type="tel" inputmode="tel" maxlength="20" required placeholder="+91 98xxxxxxxx" pattern="\+?[0-9 \(\)\-]{7,20}">
+        </label>
+        <button class="btn btn-primary" type="submit">Add guardian</button>
+      </form>
+      <ul id="guardian-list" class="guardians"></ul>
+    </section>
+
+    <!-- MAP -->
+    <section id="view-map" class="view" data-view="map" hidden>
+      <p class="eyebrow">Safety Map</p>
+      <h1>Nearest help</h1>
+      <p class="muted">Police stations and hospitals within 3 km of you, from OpenStreetMap, plus your recorded alerts.</p>
+      <div id="map" class="map" aria-label="Map of nearby help"></div>
+      <div id="map-status" class="status" role="status" aria-live="polite"></div>
+      <ul id="help-list" class="help-list"></ul>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Sections">
+    <a href="#sos" data-tab="sos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 10 5.2-.6 9-5 9-10V6l-9-4Zm-1 5h2v6h-2V7Zm0 8h2v2h-2v-2Z"/></svg>SOS</a>
+    <a href="#walk" data-tab="walk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.4l4 2.4-.8 1.3L11 13V7h2Z"/></svg>Safe Walk</a>
+    <a href="#ledger" data-tab="ledger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 3h7v2h-7v-2Zm0-3h7v2h-7v-2Zm0 6h7v2h-7v-2Z"/></svg>Ledger</a>
+    <a href="#guardians" data-tab="guardians"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20c0-3.3 3.1-6 7-6s7 2.7 7 6H2Zm15 0c0-1.8-.6-3.4-1.7-4.6 3.3.2 5.7 2.3 5.7 4.6h-4Z"/></svg>Guardians</a>
+    <a href="#map" data-tab="map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Map</a>
+  </nav>
+
+  <dialog id="alert-dialog" class="dialog" aria-labelledby="alert-title">
+    <h2 id="alert-title">SOS recorded</h2>
+    <p id="alert-meta" class="muted small"></p>
+    <pre id="alert-message" class="message"></pre>
+    <div id="alert-actions" class="dialog-actions"></div>
+    <button id="alert-close" class="btn btn-ghost btn-block" type="button">Close</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
