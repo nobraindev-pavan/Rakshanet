@@ -210,7 +210,7 @@ h3 { font-size: 0.8rem; margin: 6px 0 0; text-transform: uppercase; letter-spaci
 .meter-track { fill: none; stroke: color-mix(in srgb, var(--muted) 22%, transparent); stroke-width: 16; stroke-linecap: round; }
 .meter-fill {
   fill: none; stroke: url(#meter-grad); stroke-width: 16; stroke-linecap: round;
-  stroke-dasharray: var(--v, 0) 100; transition: stroke-dasharray 1s cubic-bezier(.2,.8,.2,1);
+  stroke-dasharray: var(--v, 0) 200; transition: stroke-dasharray 1s cubic-bezier(.2,.8,.2,1);
   filter: drop-shadow(0 0 6px rgb(59 130 246 / 0.35));
 }
 .meter-ticks line { stroke: color-mix(in srgb, var(--muted) 55%, transparent); stroke-width: 2; }
@@ -221,7 +221,7 @@ h3 { font-size: 0.8rem; margin: 6px 0 0; text-transform: uppercase; letter-spaci
 .meter-needle line { stroke: var(--text); stroke-width: 4; stroke-linecap: round; }
 .meter-needle circle { fill: var(--text); stroke: var(--brand); stroke-width: 3; }
 .meter-scale { font: 700 9px system-ui, sans-serif; fill: var(--muted); letter-spacing: 0.08em; }
-.meter-readout-row { margin-top: -30px; margin-bottom: 6px; line-height: 1; }
+.meter-readout-row { margin: 2px 0 6px; line-height: 1; }
 .meter-number { font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--meter-color, var(--text)); text-shadow: 0 0 24px color-mix(in srgb, var(--meter-color, var(--brand)) 55%, transparent); }
 .meter-readout-row small { font-weight: 700; margin-left: 4px; }
 .result.is-high { --meter-color: var(--danger); }

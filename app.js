@@ -123,11 +123,14 @@ const RISK_TEXT = { high: 'High risk', medium: 'Suspicious', low: 'Low risk' };
 
 // Meter position always agrees with the risk label: each level owns a band of
 // the dial, and the rule score places the needle within that band.
-const BANDS = { low: [0, 34, 0, 19], medium: [35, 69, 20, 49], high: [70, 100, 50, 100] };
+// High-risk scores are open-ended, so that band eases toward 99 instead of
+// pinning every scam at 100.
+const BANDS = { low: [4, 34, 0, 19], medium: [35, 69, 20, 49], high: [70, 99, 50, Infinity] };
 function meterValue(r) {
   const [lo, hi, sLo, sHi] = BANDS[r.risk];
   const s = Number(r.score) || 0;
-  const t = s >= sLo && s <= sHi ? (s - sLo) / (sHi - sLo) : 0.5;
+  if (s < sLo || s > sHi) return Math.round((lo + hi) / 2);
+  const t = sHi === Infinity ? 1 - Math.exp(-(s - sLo) / 40) : (s - sLo) / (sHi - sLo);
   return Math.round(lo + t * (hi - lo));
 }
 
