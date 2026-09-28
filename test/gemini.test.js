@@ -67,3 +67,33 @@ test('a blocked or truncated Gemini answer falls back to rules / template', asyn
   assert.equal(ok.source, 'ai');
   assert.equal(ok.provider, 'gemini');
 });
+
+test('a screenshot is sent to Gemini as inline image data and its text is mined for suspects', async () => {
+  const { analyze } = await import('../lib/assistant.js');
+  requests = [];
+  nextReply = reply(JSON.stringify({
+    risk: 'high', category: 'kyc_update', summary: 'Fake KYC SMS in the screenshot.',
+    red_flags: ['Look-alike SBI link'], actions: ['Do not click.'],
+    message_text: 'Your SBI KYC expires today. Update at http://sbi-kyc.xyz or pay help.desk@ybl',
+  }));
+  const image = { mimeType: 'image/jpeg', data: Buffer.from('fake jpeg bytes').toString('base64') };
+  const r = await analyze({ text: '', channel: 'sms', image });
+
+  assert.equal(r.source, 'ai');
+  assert.match(r.messageText, /SBI KYC/);
+  assert.deepEqual(r.indicators.urls, ['http://sbi-kyc.xyz']);
+  assert.deepEqual(r.indicators.upiIds, ['help.desk@ybl']);
+  const parts = requests[0].body.contents[0].parts;
+  assert.deepEqual(parts[0].inlineData, image);
+  assert.match(parts[1].text, /screenshot/i);
+});
+
+test('invalid images are ignored and an empty request falls back to rules', async () => {
+  const { analyze, cleanImage } = await import('../lib/assistant.js');
+  assert.equal(cleanImage({ mimeType: 'image/gif', data: 'AAAA' }), null);
+  assert.equal(cleanImage({ mimeType: 'image/png', data: 'not base64!' }), null);
+  requests = [];
+  const r = await analyze({ text: '', image: { mimeType: 'text/html', data: 'PGh0bWw+' } });
+  assert.equal(r.source, 'rules');
+  assert.equal(requests.length, 0);
+});

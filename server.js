@@ -11,7 +11,7 @@ import { aiProvider } from './lib/assistant.js';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const PORT = Number(process.env.PORT) || 8080;
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.mp4': 'video/mp4' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.mp4': 'video/mp4' };
 const API = { '/api/analyze': analyze, '/api/complaint': complaint };
 
 function vercelish(res) {
@@ -25,7 +25,8 @@ http.createServer(async (req, res) => {
   const api = API[url.pathname];
   if (api) {
     let raw = '';
-    for await (const chunk of req) { raw += chunk; if (raw.length > 100_000) return vercelish(res).status(413).json({ error: 'too large' }); }
+    // Same 4.5 MB request cap as Vercel functions (screenshots are downsized in the browser).
+    for await (const chunk of req) { raw += chunk; if (raw.length > 4_500_000) return vercelish(res).status(413).json({ error: 'too large' }); }
     try { req.body = raw ? JSON.parse(raw) : {}; } catch { return vercelish(res).status(400).json({ error: 'invalid JSON' }); }
     return api(req, vercelish(res));
   }

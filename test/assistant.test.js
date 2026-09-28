@@ -64,3 +64,21 @@ test('draftComplaint returns the AI draft, or the template when the call fails',
   assert.equal(fallback.source, 'template');
   assert.match(fallback.complaint, /I, Priya, wish to report/);
 });
+
+test('a screenshot is sent to Claude as a base64 image block before the text', async () => {
+  const { analyze } = await import('../lib/assistant.js');
+  requests = [];
+  nextReply = message(JSON.stringify({
+    risk: 'high', category: 'upi_collect_fraud', summary: 'Fake refund request.', red_flags: ['UPI PIN to receive'], actions: ['Decline.'],
+    message_text: 'Enter UPI PIN to receive refund. Call 9876543210',
+  }));
+  const image = { mimeType: 'image/png', data: Buffer.from('png').toString('base64') };
+  const r = await analyze({ text: '', channel: 'whatsapp', image });
+
+  assert.equal(r.source, 'ai');
+  assert.deepEqual(r.indicators.phones, ['9876543210']);
+  const [img, text] = requests[0].body.messages[0].content;
+  assert.deepEqual(img, { type: 'image', source: { type: 'base64', media_type: 'image/png', data: image.data } });
+  assert.equal(text.type, 'text');
+  assert.ok(requests[0].body.output_config.format.schema.required.includes('message_text'));
+});
