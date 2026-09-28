@@ -14,8 +14,8 @@ The form must be filled in by the **team leader only**.
 | X post link | Post the draft below, then copy its URL | `<x.com/.../status/...>` |
 | Documentation (optional) | Paste this file + README into a Google Doc, set to "Anyone with the link" | `<docs.google.com/...>` |
 | Logo | Ready | [`assets/logo-512.png`](../assets/logo-512.png) (also 1024 px and SVG) |
-| Demo video | Ready, 40 s | [`docs/media/rakshanet-demo.mp4`](media/rakshanet-demo.mp4) |
-| Pitch deck (PPT) | Ready, 8 slides | [`docs/RakshaNet-Pitch-Deck.pptx`](RakshaNet-Pitch-Deck.pptx). Put your live link and team names on slide 8. |
+| Demo video | Ready, 48 s | [`docs/media/rakshanet-demo.mp4`](media/rakshanet-demo.mp4) |
+| Pitch deck (PPT) | Ready, 8 slides | [`docs/RakshaNet-Pitch-Deck.pptx`](RakshaNet-Pitch-Deck.pptx). Put your live link on slide 8. |
 | Short description | Ready | Below |
 | Full idea description | Ready | Below |
 
@@ -26,7 +26,7 @@ The form must be filled in by the **team leader only**.
 | Field | Value |
 |---|---|
 | Project Name | `RakshaNet` |
-| Industry Type | Closest fit to safety or social impact (for example Social Good, Security, or Consumer). If none fits, choose **Others**. |
+| Industry Type | **Cybersecurity** (or the closest security / AI / social-impact option). If none fits, choose **Others**. |
 | Live link | `<live URL>`. If not deployed: `https://github.com/nobraindev-pavan/Rakshanet` |
 | X account | `<your X profile URL>` |
 | GitHub repo | `https://github.com/nobraindev-pavan/Rakshanet` |
@@ -47,10 +47,9 @@ The form must be filled in by the **team leader only**.
 ```
 Building RakshaNet for #Async26 🛡️
 
-Hold-to-SOS with live location, a Safe Walk timer that alerts your people if you don't check in, and a tamper-evident evidence ledger you can sign with your wallet.
+Paste any suspicious SMS, link or call script and AI tells you if it's a scam. Lost money? A golden-hour 1930 guide, a tamper-proof evidence vault and an AI-drafted cybercrime complaint.
 
-Try it: <live link>
-Code: github.com/nobraindev-pavan/Rakshanet
+github.com/nobraindev-pavan/Rakshanet
 ```
 
 ## Step 8 to 10: media
@@ -61,43 +60,47 @@ Code: github.com/nobraindev-pavan/Rakshanet
 
 ## Step 12: short description
 
-> One-tap SOS, a Safe Walk check-in timer and a tamper-evident evidence ledger: help in seconds, proof nobody can quietly edit.
+> AI-powered cyber-fraud shield: check any message or link for scams, get golden-hour help after fraud, keep tamper-proof evidence and file your cybercrime complaint in minutes.
 
 ## Step 13: describe your idea
 
 **What it is**
 
-RakshaNet ("raksha" means protection) is a personal safety web app that installs like a native app. It has three layers: a hold-to-send SOS that shares your live location with your guardians, a Safe Walk timer that raises the alarm automatically if you don't check in, and an evidence ledger that seals every alert into a hash-chained log you can sign with your crypto wallet.
+RakshaNet ("raksha" means protection) is a cyber-fraud shield for everyday people in India, delivered as an installable, offline-first web app. It has four parts:
+
+- **Scam Check:** paste any SMS, WhatsApp message, email, link, UPI request or what a caller said, or upload a screenshot of it. You get an instant verdict, then an AI analysis (Google Gemini, or Claude when available) with the risk level, the scam type, the specific red flags and what to do next.
+- **Scammed? guide:** a golden-hour emergency flow. It tells you to call 1930 first, then block your bank and UPI, secure your accounts, warn your contacts and report. It's a checklist that remembers your progress.
+- **Evidence Vault:** scam messages, payment screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit is provable. You can sign the vault with your crypto wallet to timestamp it.
+- **AI complaint drafter:** the AI turns your facts, the suspect details and your vault evidence into a clear complaint ready for cybercrime.gov.in, and tells you which portal section to choose.
 
 **Why it was built**
 
-Safety apps tend to fail at the moments that matter. They are too slow to open, one-tap buttons misfire so people turn them off, and they do nothing if you can't reach your phone. Afterwards, screenshots and chat logs are easy to dispute. India's NCRB recorded 4,45,256 cases of crimes against women in 2022. We wanted something that takes one gesture to use, protects you even when you can't act, and leaves a record that is provably untouched.
+Cyber fraud wins at three moments. Before: fake KYC SMS, "digital arrest" video calls, task scams and look-alike bank links are convincing. During: victims panic and miss the golden hour, when calling 1930 can still freeze the money. After: screenshots get deleted, complaints are vague, and evidence can be questioned. RakshaNet covers all three, even with weak or no internet.
 
 **How it works (technical approach)**
 
-- Installable PWA in plain HTML, CSS and JavaScript with no framework and no backend. About 40 KB of app code, cached by a service worker so SOS, Safe Walk and the ledger work offline.
-- **SOS:** a 1.5-second hold with a progress ring prevents misfires (keyboard accessible too). It captures high-accuracy GPS through the Geolocation API and builds an alert with a Google Maps link and the evidence hash. The alert is ready to send by SMS to all guardians, WhatsApp, the native share sheet, or a 112 call.
-- **Safe Walk:** a dead-man's switch. The deadline is saved on the device, so it survives a reload. If it expires, an SOS fires automatically.
-- **Evidence ledger:** each event is `{index, timestamp, type, payload, prevHash}`, canonicalised (sorted-key JSON) and hashed with WebCrypto SHA-256. Every record commits to the previous one, so editing, deleting or reordering any record is detected and the broken record is pinpointed. Writes are serialised so the chain never forks. A built-in tamper test demonstrates this on a copy.
-- **Wallet anchoring:** any EIP-1193 wallet (for example MetaMask) signs the ledger head with `personal_sign`. That gives a cryptographic, timestamped proof of the evidence without gas or tokens.
-- **Nearby help:** an OpenStreetMap Overpass query lists police stations and hospitals within 3 km, with call or directions buttons. Leaflet is bundled locally and loaded only when the map opens.
-- The ledger core has unit tests (`npm test`), including tests for forged-entry and deletion detection.
+- **Offline rule engine** (`lib/scam-rules.js`): 20+ patterns for Indian fraud types (OTP theft, UPI collect/QR, fake KYC, digital arrest, courier, task, investment, loan-app, sextortion, remote-access, impersonation). It also does link forensics: look-alike bank and brand domains, punycode, URL shorteners, bare IP hosts, risky TLDs and "@" tricks. It extracts UPI IDs, phone numbers, links, emails and amounts. It gives an instant result with no network.
+- **AI analysis** (`api/analyze.js`): a serverless function calls Gemini (official Google GenAI SDK, free tier) or Claude (official Anthropic SDK) with a JSON-schema structured output (risk, category, summary, red flags, actions). The pasted text is fenced as untrusted data so instructions hidden in a scam message are never followed. If the AI is unavailable, blocks the request or is cut off, the app falls back to the rule engine.
+- **AI complaint drafting** (`api/complaint.js`): the AI writes the complaint only from the facts provided and leaves `<placeholders>` instead of inventing details. There's an offline template fallback.
+- **Evidence Vault** (`lib/ledger.js`): each record is canonical JSON `{index, timestamp, type, payload, prevHash}` hashed with WebCrypto SHA-256. Verification pinpoints any edit, deletion or reorder. Files are hashed locally and never uploaded. An EIP-1193 wallet (for example MetaMask) signs the vault head with `personal_sign`. You can export a JSON evidence pack.
+- **PWA:** plain HTML, CSS and JS with no framework, cached by a service worker. No accounts and no database: data stays on the device, and text is sent to the AI only when you press Check or Draft.
+- 22 automated tests cover the rules, the ledger, and the Gemini and Claude request/fallback paths against mocked APIs.
 
 **Unique selling point**
 
-It protects you before, during and after an incident. The hold-to-send trigger can't misfire. Safe Walk works even when you can't touch your phone. The hash-chained, wallet-signed ledger makes evidence tampering provable. Everything is private by default: data stays on your device until you choose to send it.
+It helps before, during and after a scam in one place. It works offline and uses AI when it's available. It's tuned for Indian frauds and the 1930 / cybercrime.gov.in process. Its hash-chained, wallet-signed vault makes evidence tampering provable. And it takes a panicked victim to a ready-to-file complaint in minutes.
 
 **Additional details (optional)**
 
-No sign-up and no server, so there is nothing to breach. Works on any modern phone browser and adapts to dark and light mode. Built for Indian emergency numbers (112, women's helpline 1091).
+The AI is designed to be safe: structured outputs, prompt-injection fencing, facts-only drafting and a graceful fallback. There's no sign-up and no server-side storage, so there's nothing to breach.
 
 ## Step 14: roadmap (optional)
 
-> **Current status:** working prototype covering hold-to-SOS, Safe Walk, the hash-chained evidence ledger, wallet signing, the nearby-help map and offline PWA support.
+> **Current status:** working prototype with an offline scam rule engine, AI-powered (Gemini / Claude) scam analysis and complaint drafting, a golden-hour emergency checklist, a hash-chained Evidence Vault with wallet signing, and an installable offline PWA.
 >
-> **Next:** periodic on-chain anchoring of ledger Merkle roots on a low-fee chain, background SMS alerts through a gateway, and a shake or power-button trigger.
+> **Next:** screenshot and image input to the AI, Hindi and regional languages, a WhatsApp bot and browser extension, and a community database of reported scam numbers and UPI IDs.
 >
-> **Later:** a verified volunteer responder network with reputation, hashed audio and photo evidence capture, an NGO and police dashboard, and multilingual voice SOS.
+> **Later:** periodic on-chain anchoring of vault roots, bank and NCRP integrations, live scam-call detection, and a dashboard for police cyber cells.
 
 ## Step 15: highlights
 
@@ -109,7 +112,7 @@ Paste the same X post link used in Step 7.
 2. Wallet address: click **Authenticate** (top right), then **Read and Sign**, then **Manage Wallet** (top right) to confirm the address. Copy it and paste it into the form.
 3. Bio template:
 
-> `<Name>` is a `<role, e.g. full-stack developer>` focused on `<areas, e.g. web apps and Web3>`. Built RakshaNet for Async'26: a PWA with hash-chained evidence and wallet signing. Previous projects: `<project 1: one line>`, `<project 2: one line>`, `<project 3: one line>`. Skills: `<JavaScript, React, Solidity, ...>`.
+> `<Name>` is a `<role, e.g. full-stack developer>` focused on `<areas, e.g. security, AI apps and Web3>`. Built RakshaNet for Async'26: an AI-powered cyber-fraud shield with a hash-chained evidence vault. Previous projects: `<project 1: one line>`, `<project 2: one line>`, `<project 3: one line>`. Skills: `<JavaScript, Node.js, LLM APIs, Solidity, ...>`.
 
 ## Step 17: team members
 
@@ -119,10 +122,11 @@ Skip this section.
 
 ## Deploying for the live link
 
-The app is static files with no build step. Pick one:
+**Vercel (recommended, needed for the AI features):**
 
-- **Vercel:** go to vercel.com, choose Add New, then Project, import `nobraindev-pavan/Rakshanet`, and deploy. Leave the framework preset as "Other" and the build command empty.
-- **Netlify:** go to app.netlify.com, choose Add new site, then Import from Git, and pick the repo. Leave the build command empty and set the publish directory to `/`.
-- **GitHub Pages:** in the repo, open Settings, then Pages, choose Deploy from a branch, and pick your branch with `/ (root)`.
+1. Go to vercel.com, choose Add New, then Project, and import `nobraindev-pavan/Rakshanet`. Leave the framework preset as "Other" and the build command empty.
+2. Get a **free** Gemini key: go to **aistudio.google.com**, sign in with a Google account, then choose **Get API key → Create API key**. No card is needed.
+3. In Vercel, open **Settings → Environment Variables** and add `GEMINI_API_KEY` with that key, with all environments ticked.
+4. Deploy, or **Redeploy** if the project already exists, because new variables only apply to fresh deploys. The `api/` folder becomes the `/api/analyze` and `/api/complaint` functions automatically.
 
-Geolocation and the service worker need HTTPS. All three hosts provide it.
+If you later get Claude credits, add `ANTHROPIC_API_KEY` too; Claude is used when both are set. Without any key, or on a static host such as GitHub Pages or Netlify without functions, the app still works fully in offline mode. It uses the rule engine and the complaint template in place of AI.

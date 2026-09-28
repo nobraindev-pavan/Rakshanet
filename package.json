@@ -1,12 +1,19 @@
 {
   "name": "rakshanet",
   "version": "1.0.0",
-  "description": "RakshaNet: one-tap SOS, safe-walk check-ins and a tamper-evident incident ledger.",
+  "description": "RakshaNet: AI scam checker, cyber-fraud emergency guide, tamper-evident evidence vault and complaint drafter.",
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "start": "node server.js",
     "test": "node --test test/*.test.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@google/genai": "^2.24.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

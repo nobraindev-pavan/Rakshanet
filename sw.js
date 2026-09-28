@@ -1,6 +1,7 @@
-// Offline-first app shell: SOS, Safe Walk and the ledger keep working without a network.
-const CACHE = 'rakshanet-v1';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'lib/ledger.js', 'assets/logo.svg', 'manifest.webmanifest', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css'];
+// Offline-first app shell: the rule-based scam check, emergency checklist and
+// Evidence Vault keep working without a network. /api calls (POST) pass through.
+const CACHE = 'rakshanet-v4';
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'lib/ledger.js', 'lib/scam-rules.js', 'lib/complaint.js', 'assets/logo.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -15,7 +16,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Same-origin: network first (always fresh when online), cache as fallback.
-// Cross-origin (map tiles, Overpass) is left to the browser.
+// Cross-origin requests are left to the browser.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
