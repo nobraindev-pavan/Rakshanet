@@ -1,0 +1,12 @@
+{
+  "name": "rakshanet",
+  "version": "1.0.0",
+  "description": "RakshaNet: one-tap SOS, safe-walk check-ins and a tamper-evident incident ledger.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT"
+}

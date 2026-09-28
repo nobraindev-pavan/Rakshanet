@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RakshaNet logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5a76"/>
+      <stop offset="1" stop-color="#c0112f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0f1115"/>
+  <path d="M256 64 96 128v112c0 104 68 186 160 208 92-22 160-104 160-208V128L256 64Z" fill="url(#g)"/>
+  <g stroke="#fff" stroke-width="14" stroke-linecap="round" fill="none" opacity=".95">
+    <path d="M256 196 184 276M256 196l72 80M184 276h144M256 196v140"/>
+  </g>
+  <g fill="#fff">
+    <circle cx="256" cy="196" r="26"/>
+    <circle cx="184" cy="276" r="20"/>
+    <circle cx="328" cy="276" r="20"/>
+    <circle cx="256" cy="344" r="20"/>
+  </g>
+</svg>
