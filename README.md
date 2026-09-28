@@ -6,7 +6,7 @@
 
 RakshaNet ("raksha" means protection) is an offline-first web app that helps people in India before, during and after a cyber scam.
 
-- **Scam Check.** Paste any SMS, WhatsApp message, email, link, UPI request or call script. The offline rule engine gives an instant verdict. Then an AI (**Gemini**, free, or **Claude**) adds its analysis: the risk level, the scam type, the specific red flags and what to do next.
+- **Scam Check.** Paste any SMS, WhatsApp message, email, link, UPI request or call script, or **upload a screenshot**. With an AI key the AI reads the screenshot; without one, the text is read on the device (Tesseract.js). The offline rule engine gives an instant verdict. Then an AI (**Gemini**, free, or **Claude**) adds its analysis: the risk level, the scam type, the specific red flags and what to do next.
 - **Scammed?** A golden-hour emergency guide. It starts with calling **1930**, then walks through blocking your bank and UPI, securing your accounts, warning your contacts and reporting, with a checklist that remembers your progress.
 - **Evidence Vault.** Scam messages, screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit, deletion or reordering is detected. You can sign the vault with your wallet to timestamp it, and export a JSON evidence pack.
 - **Report.** The AI drafts a complaint ready for **cybercrime.gov.in**, using your facts, the suspect IDs and your vault evidence hashes. There's an offline template fallback.

@@ -1,6 +1,6 @@
 // Offline-first app shell: the rule-based scam check, emergency checklist and
 // Evidence Vault keep working without a network. /api calls (POST) pass through.
-const CACHE = 'rakshanet-v3';
+const CACHE = 'rakshanet-v4';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'lib/ledger.js', 'lib/scam-rules.js', 'lib/complaint.js', 'assets/logo.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

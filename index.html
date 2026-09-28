@@ -27,7 +27,7 @@
     <section class="view" data-view="check">
       <p class="eyebrow">Scam Check</p>
       <h1>Is this a <span class="grad">scam?</span></h1>
-      <p class="muted">Paste a message, email, link, UPI request or what a caller told you. You get an instant offline check, then an AI analysis.</p>
+      <p class="muted">Paste a message, link, UPI request or what a caller told you, or upload a screenshot. You get an instant offline check, then an AI analysis.</p>
       <form id="check-form" class="card">
         <div class="chips" role="radiogroup" aria-label="Where did you get it?">
           <button class="chip is-active" type="button" data-channel="sms" role="radio" aria-checked="true">SMS</button>
@@ -39,13 +39,28 @@
         </div>
         <label class="field">
           <span>Message, link or call details</span>
-          <textarea id="check-text" rows="6" maxlength="8000" required placeholder="e.g. Dear customer, your SBI account will be blocked today. Update KYC now: http://sbi-kyc-update.xyz"></textarea>
+          <textarea id="check-text" rows="6" maxlength="8000" placeholder="e.g. Dear customer, your SBI account will be blocked today. Update KYC now: http://sbi-kyc-update.xyz"></textarea>
         </label>
+        <div class="upload">
+          <label class="upload-drop" id="upload-drop">
+            <input id="check-image" type="file" accept="image/*" class="visually-hidden">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h3l2-2h6l2 2h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
+            <span><b>Upload a screenshot</b><small class="muted">Scam SMS, WhatsApp chat, payment request or website</small></span>
+          </label>
+          <div id="image-preview" class="image-preview" hidden>
+            <img id="image-thumb" alt="Screenshot to check">
+            <div>
+              <strong id="image-name"></strong>
+              <button id="image-clear" class="btn btn-ghost btn-sm" type="button">Remove</button>
+            </div>
+          </div>
+        </div>
         <div class="row">
           <button class="btn btn-primary" type="submit">Check it</button>
           <button id="check-sample" class="btn btn-ghost" type="button">Try a sample</button>
         </div>
-        <p class="muted small">Your text goes to the AI only when you press Check. Don't paste passwords or OTPs.</p>
+        <div id="check-status" class="status" role="status" aria-live="polite"></div>
+        <p class="muted small">Text and screenshots go to the AI only when you press Check. Don't share passwords, OTPs or bank details.</p>
       </form>
 
       <article id="result" class="card result" hidden aria-live="polite">

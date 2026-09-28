@@ -68,7 +68,7 @@ github.com/nobraindev-pavan/Rakshanet
 
 RakshaNet ("raksha" means protection) is a cyber-fraud shield for everyday people in India, delivered as an installable, offline-first web app. It has four parts:
 
-- **Scam Check:** paste any SMS, WhatsApp message, email, link, UPI request or what a caller said. You get an instant verdict, then an AI analysis (Google Gemini, or Claude when available) with the risk level, the scam type, the specific red flags and what to do next.
+- **Scam Check:** paste any SMS, WhatsApp message, email, link, UPI request or what a caller said, or upload a screenshot of it. You get an instant verdict, then an AI analysis (Google Gemini, or Claude when available) with the risk level, the scam type, the specific red flags and what to do next.
 - **Scammed? guide:** a golden-hour emergency flow. It tells you to call 1930 first, then block your bank and UPI, secure your accounts, warn your contacts and report. It's a checklist that remembers your progress.
 - **Evidence Vault:** scam messages, payment screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit is provable. You can sign the vault with your crypto wallet to timestamp it.
 - **AI complaint drafter:** the AI turns your facts, the suspect details and your vault evidence into a clear complaint ready for cybercrime.gov.in, and tells you which portal section to choose.

@@ -26,6 +26,7 @@ const state = {
   checklist: load(KEYS.checklist, {}),
   profile: load(KEYS.profile, {}),
   channel: 'sms',
+  image: null, // { file, hash, payload: { mimeType, data }, url }
   lastCheck: null,
   wallet: null,
 };
@@ -196,29 +197,141 @@ function renderResult(r, { pending = false } = {}) {
   else { status.textContent = ''; status.className = 'status'; }
 }
 
+// ---------- Screenshots ----------
+const MAX_IMAGE_EDGE = 1600;
+const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+const toHex = (buf) => Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+
+// Downsize to a JPEG the API accepts (Vercel caps requests at 4.5 MB).
+async function prepareImage(file) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  return { mimeType: 'image/jpeg', data: dataUrl.slice(dataUrl.indexOf(',') + 1) };
+}
+
+async function setImage(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return toast('Please choose an image file');
+  if (file.size > 20 * 1024 * 1024) return toast('Image is over 20 MB');
+  try {
+    const [payload, digest] = await Promise.all([prepareImage(file), crypto.subtle.digest('SHA-256', await file.arrayBuffer())]);
+    clearImage();
+    state.image = { file, hash: toHex(digest), payload, url: URL.createObjectURL(file) };
+    $('#image-thumb').src = state.image.url;
+    $('#image-name').textContent = file.name || 'Screenshot';
+    $('#image-preview').hidden = false;
+  } catch {
+    toast('Could not open that image');
+  }
+}
+
+function clearImage() {
+  if (state.image?.url) URL.revokeObjectURL(state.image.url);
+  state.image = null;
+  $('#check-image').value = '';
+  $('#image-preview').hidden = true;
+}
+
+// Free on-device fallback: read the screenshot's text in the browser. Loaded
+// only when AI isn't available, so AI deployments never download it.
+const OCR_TIMEOUT_MS = 45_000;
+let ocrWorkerP;
+const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), ms))]);
+
+async function readScreenshotText(file) {
+  try {
+    return await withTimeout((async () => {
+      if (!window.Tesseract) {
+        await new Promise((resolve, reject) => {
+          document.head.append(el('script', { src: TESSERACT_URL, onload: resolve, onerror: reject }));
+        });
+      }
+      // errorHandler turns worker failures (e.g. the language data can't be
+      // downloaded) into a rejection instead of a promise that never settles.
+      ocrWorkerP ??= new Promise((resolve, reject) => {
+        window.Tesseract.createWorker('eng', 1, { errorHandler: reject }).then(resolve, reject);
+      });
+      const { data } = await (await ocrWorkerP).recognize(file);
+      // Rejoin words and links that wrapped at a hyphen ("sbi-\nkyc.xyz").
+      return (data.text || '').replace(/[ \t]+\n/g, '\n').replace(/-\n(?=\S)/g, '-').trim();
+    })(), OCR_TIMEOUT_MS);
+  } catch (err) {
+    // Start fresh next time rather than reusing a broken worker.
+    ocrWorkerP?.then((w) => w.terminate()).catch(() => {});
+    ocrWorkerP = null;
+    throw err;
+  }
+}
+
+function setCheckStatus(text, kind = '') {
+  const node = $('#check-status');
+  node.textContent = text;
+  node.className = `status ${kind}`;
+}
+
 async function runCheck(e) {
   e?.preventDefault();
-  const text = $('#check-text').value.trim();
-  if (!text) return toast('Paste a message or link first');
+  const typed = $('#check-text').value.trim();
+  const image = state.image;
+  if (!typed && !image) return toast('Paste a message or upload a screenshot first');
   const channel = state.channel;
+  const checkId = Symbol('check');
+  state.lastCheck = { id: checkId, text: typed, channel, image, result: null, saved: false };
+  const stale = () => state.lastCheck?.id !== checkId; // user started a newer check
 
-  // 1. Instant offline answer.
-  const quick = analyzeText(text, channel);
-  state.lastCheck = { text, channel, result: quick, saved: false };
-  renderResult(quick, { pending: true });
-  $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // 2. AI upgrade when the server has it; otherwise keep the offline result.
-  let final = quick;
-  try {
-    const ai = await postJSON('api/analyze', { text, channel });
-    if (ai && ai.risk && ai.summary) final = ai;
-  } catch {
-    final = { ...quick, note: navigator.onLine ? 'AI analysis is not available on this deployment; showing offline rule check.' : 'You are offline; showing offline rule check.' };
+  // 1. Instant offline answer from typed text.
+  if (typed) {
+    const quick = analyzeText(typed, channel);
+    state.lastCheck.result = quick;
+    renderResult(quick, { pending: true });
+    $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    setCheckStatus('Reading your screenshot…', 'pending');
   }
-  if (state.lastCheck?.text !== text) return; // user started a newer check
+
+  // 2. AI analysis (reads the screenshot too) when the server has it.
+  let ai = null;
+  try {
+    ai = await postJSON('api/analyze', { text: typed, channel, image: image?.payload });
+  } catch { /* offline, static host or no AI */ }
+  if (stale()) return;
+
+  let final;
+  if (ai?.source === 'ai') {
+    final = ai;
+    if (ai.messageText && !typed) state.lastCheck.text = ai.messageText;
+  } else {
+    // 3. No AI: read the screenshot on this device, then use the offline rules.
+    let text = typed;
+    if (image && !typed) {
+      setCheckStatus('Reading the text in your screenshot on this device…', 'pending');
+      try { text = await readScreenshotText(image.file); } catch { text = ''; }
+      if (stale()) return;
+      if (!text) {
+        setCheckStatus('');
+        return toast('Could not read text in that screenshot. Paste the message text instead.');
+      }
+      state.lastCheck.text = text;
+    }
+    const why = ai?.note || (navigator.onLine ? 'AI analysis is not available on this deployment; showing offline rule check.' : 'You are offline; showing offline rule check.');
+    final = { ...analyzeText(text, channel), note: image && !typed ? `Read your screenshot on this device. ${why}` : why };
+  }
+  setCheckStatus('');
+  if (!$('#check-text').value.trim() && state.lastCheck.text) $('#check-text').value = state.lastCheck.text;
   state.lastCheck.result = final;
+  const firstRender = $('#result').hidden;
   renderResult(final);
+  if (firstRender || !typed) $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function saveCheck() {
@@ -226,10 +339,12 @@ async function saveCheck() {
   if (!c) return;
   if (c.saved) return toast('Already in your vault');
   const r = c.result;
+  if (!r) return toast('Wait for the check to finish');
   await record('CHECK', {
     channel: c.channel,
     text: c.text,
     textHash: await sha256Hex(c.text),
+    screenshot: c.image ? { name: c.image.file.name, size: c.image.file.size, type: c.image.file.type, hash: c.image.hash } : undefined,
     risk: r.risk,
     category: r.category,
     source: r.source,
@@ -241,13 +356,14 @@ async function saveCheck() {
 
 function reportFromCheck() {
   const c = state.lastCheck;
-  if (!c) return;
+  if (!c?.result) return;
   const i = c.result.indicators || {};
   $('#r-category').value = c.result.category === 'not_a_scam' ? 'other' : c.result.category;
   $('#r-suspect').value = [...(i.phones || []), ...(i.upiIds || []), ...(i.urls || []), ...(i.emails || [])].join(', ');
   if (!$('#r-desc').value.trim()) {
     const via = { sms: 'an SMS', whatsapp: 'a WhatsApp message', call: 'a phone call', email: 'an email', social: 'a social media / Telegram message', link: 'a link' }[c.channel];
-    $('#r-desc').value = `I received ${via}${c.channel === 'call' ? ' in which the caller said' : ' that said'}:\n"${c.text}"\n\n<Describe what you did next and what happened>`;
+    const quoted = c.text ? `:\n"${c.text}"` : ' (screenshot attached in my evidence)';
+    $('#r-desc').value = `I received ${via}${c.channel === 'call' ? ' in which the caller said' : ' that said'}${quoted}\n\n<Describe what you did next and what happened>`;
   }
   if (!c.saved) saveCheck();
   location.hash = '#report';
@@ -266,11 +382,25 @@ function setupCheck() {
   $('#check-form').addEventListener('submit', runCheck);
   $('#check-sample').addEventListener('click', () => {
     const [channel, text] = SAMPLES[sampleIdx++ % SAMPLES.length];
+    clearImage();
     document.querySelector(`[data-channel="${channel}"]`).click();
     $('#check-text').value = text;
   });
   $('#result-save').addEventListener('click', saveCheck);
   $('#result-report').addEventListener('click', reportFromCheck);
+
+  $('#check-image').addEventListener('change', (e) => setImage(e.target.files[0]));
+  $('#image-clear').addEventListener('click', clearImage);
+  const drop = $('#upload-drop');
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('is-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); setImage(e.dataTransfer.files[0]); });
+  // Paste a screenshot straight from the clipboard.
+  document.addEventListener('paste', (e) => {
+    if (location.hash && location.hash !== '#check') return;
+    const file = [...(e.clipboardData?.files || [])].find((f) => f.type.startsWith('image/'));
+    if (file) { e.preventDefault(); setImage(file); }
+  });
 }
 
 // ---------- Scammed? (emergency checklist) ----------
@@ -319,7 +449,11 @@ const LABELS = { CHECK: 'Scam message', EVIDENCE: 'Evidence', REPORT: 'Complaint
 function describe(entry) {
   const p = entry.payload;
   switch (entry.type) {
-    case 'CHECK': return `${RISK_TEXT[p.risk]} · ${CATEGORIES[p.category] || p.category} · via ${p.channel}\n“${excerpt(p.text)}”`;
+    case 'CHECK': return [
+      `${RISK_TEXT[p.risk]} · ${CATEGORIES[p.category] || p.category} · via ${p.channel}`,
+      p.text ? `“${excerpt(p.text)}”` : null,
+      p.screenshot ? `Screenshot: ${p.screenshot.name} (${Math.ceil(p.screenshot.size / 1024)} KB), SHA-256 ${shortHash(p.screenshot.hash)}` : null,
+    ].filter(Boolean).join('\n');
     case 'EVIDENCE': return [p.label, p.text ? `“${excerpt(p.text)}”` : null, p.file ? `File: ${p.file.name} (${Math.ceil(p.file.size / 1024)} KB), SHA-256 ${shortHash(p.file.hash)}` : null].filter(Boolean).join('\n');
     case 'REPORT': return `${CATEGORIES[p.category] || 'Complaint'}${p.amount ? ` · ₹${Number(p.amount).toLocaleString('en-IN')}` : ''} · drafted by ${p.source === 'ai' ? 'AI' : 'template'} · text hash ${shortHash(p.complaintHash)}`;
     case 'ANCHOR': return `Signed by ${p.address.slice(0, 6)}…${p.address.slice(-4)} over vault head ${shortHash(p.head)}`;
