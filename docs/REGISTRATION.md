@@ -68,10 +68,10 @@ github.com/nobraindev-pavan/Rakshanet
 
 RakshaNet ("raksha" means protection) is a cyber-fraud shield for everyday people in India, delivered as an installable, offline-first web app. It has four parts:
 
-- **Scam Check:** paste any SMS, WhatsApp message, email, link, UPI request or what a caller said. You get an instant verdict, then an AI analysis from Claude with the risk level, the scam type, the specific red flags and what to do next.
+- **Scam Check:** paste any SMS, WhatsApp message, email, link, UPI request or what a caller said. You get an instant verdict, then an AI analysis (Google Gemini, or Claude when available) with the risk level, the scam type, the specific red flags and what to do next.
 - **Scammed? guide:** a golden-hour emergency flow. It tells you to call 1930 first, then block your bank and UPI, secure your accounts, warn your contacts and report. It's a checklist that remembers your progress.
 - **Evidence Vault:** scam messages, payment screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit is provable. You can sign the vault with your crypto wallet to timestamp it.
-- **AI complaint drafter:** Claude turns your facts, the suspect details and your vault evidence into a clear complaint ready for cybercrime.gov.in, and tells you which portal section to choose.
+- **AI complaint drafter:** the AI turns your facts, the suspect details and your vault evidence into a clear complaint ready for cybercrime.gov.in, and tells you which portal section to choose.
 
 **Why it was built**
 
@@ -80,11 +80,11 @@ Cyber fraud wins at three moments. Before: fake KYC SMS, "digital arrest" video 
 **How it works (technical approach)**
 
 - **Offline rule engine** (`lib/scam-rules.js`): 20+ patterns for Indian fraud types (OTP theft, UPI collect/QR, fake KYC, digital arrest, courier, task, investment, loan-app, sextortion, remote-access, impersonation). It also does link forensics: look-alike bank and brand domains, punycode, URL shorteners, bare IP hosts, risky TLDs and "@" tricks. It extracts UPI IDs, phone numbers, links, emails and amounts. It gives an instant result with no network.
-- **Claude AI analysis** (`api/analyze.js`): a serverless function calls Claude through the official Anthropic SDK with a JSON-schema structured output (risk, category, summary, red flags, actions). The pasted text is fenced as untrusted data so instructions hidden in a scam message are never followed. Server-side refusal fallback is enabled. If AI is unavailable or declines, the app falls back to the rule engine.
-- **AI complaint drafting** (`api/complaint.js`): Claude writes the complaint only from the facts provided and leaves `<placeholders>` instead of inventing details. There's an offline template fallback.
+- **AI analysis** (`api/analyze.js`): a serverless function calls Gemini (official Google GenAI SDK, free tier) or Claude (official Anthropic SDK) with a JSON-schema structured output (risk, category, summary, red flags, actions). The pasted text is fenced as untrusted data so instructions hidden in a scam message are never followed. If the AI is unavailable, blocks the request or is cut off, the app falls back to the rule engine.
+- **AI complaint drafting** (`api/complaint.js`): the AI writes the complaint only from the facts provided and leaves `<placeholders>` instead of inventing details. There's an offline template fallback.
 - **Evidence Vault** (`lib/ledger.js`): each record is canonical JSON `{index, timestamp, type, payload, prevHash}` hashed with WebCrypto SHA-256. Verification pinpoints any edit, deletion or reorder. Files are hashed locally and never uploaded. An EIP-1193 wallet (for example MetaMask) signs the vault head with `personal_sign`. You can export a JSON evidence pack.
 - **PWA:** plain HTML, CSS and JS with no framework, cached by a service worker. No accounts and no database: data stays on the device, and text is sent to the AI only when you press Check or Draft.
-- 19 automated tests cover the rules, the ledger, and the Claude request/fallback path against a mocked API.
+- 22 automated tests cover the rules, the ledger, and the Gemini and Claude request/fallback paths against mocked APIs.
 
 **Unique selling point**
 
@@ -96,9 +96,9 @@ The AI is designed to be safe: structured outputs, prompt-injection fencing, fac
 
 ## Step 14: roadmap (optional)
 
-> **Current status:** working prototype with an offline scam rule engine, Claude-powered scam analysis and complaint drafting, a golden-hour emergency checklist, a hash-chained Evidence Vault with wallet signing, and an installable offline PWA.
+> **Current status:** working prototype with an offline scam rule engine, AI-powered (Gemini / Claude) scam analysis and complaint drafting, a golden-hour emergency checklist, a hash-chained Evidence Vault with wallet signing, and an installable offline PWA.
 >
-> **Next:** screenshot and image input to Claude, Hindi and regional languages, a WhatsApp bot and browser extension, and a community database of reported scam numbers and UPI IDs.
+> **Next:** screenshot and image input to the AI, Hindi and regional languages, a WhatsApp bot and browser extension, and a community database of reported scam numbers and UPI IDs.
 >
 > **Later:** periodic on-chain anchoring of vault roots, bank and NCRP integrations, live scam-call detection, and a dashboard for police cyber cells.
 
@@ -125,7 +125,8 @@ Skip this section.
 **Vercel (recommended, needed for the AI features):**
 
 1. Go to vercel.com, choose Add New, then Project, and import `nobraindev-pavan/Rakshanet`. Leave the framework preset as "Other" and the build command empty.
-2. Under Settings, then Environment Variables, add `ANTHROPIC_API_KEY` with your key from console.anthropic.com.
-3. Deploy. The `api/` folder becomes the `/api/analyze` and `/api/complaint` functions automatically.
+2. Get a **free** Gemini key: go to **aistudio.google.com**, sign in with a Google account, then choose **Get API key → Create API key**. No card is needed.
+3. In Vercel, open **Settings → Environment Variables** and add `GEMINI_API_KEY` with that key, with all environments ticked.
+4. Deploy, or **Redeploy** if the project already exists, because new variables only apply to fresh deploys. The `api/` folder becomes the `/api/analyze` and `/api/complaint` functions automatically.
 
-Without the key, or on a static host such as GitHub Pages or Netlify without functions, the app still works fully in offline mode. It uses the rule engine and the complaint template in place of AI.
+If you later get Claude credits, add `ANTHROPIC_API_KEY` too; Claude is used when both are set. Without any key, or on a static host such as GitHub Pages or Netlify without functions, the app still works fully in offline mode. It uses the rule engine and the complaint template in place of AI.

@@ -1,11 +1,13 @@
 // Local dev server: static files + the same /api handlers Vercel runs.
-// Usage: ANTHROPIC_API_KEY=... npm start   (works without a key using offline rules)
+// Usage: GEMINI_API_KEY=... npm start  or  ANTHROPIC_API_KEY=... npm start
+// (works without any key using offline rules)
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import analyze from './api/analyze.js';
 import complaint from './api/complaint.js';
+import { aiProvider } from './lib/assistant.js';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const PORT = Number(process.env.PORT) || 8080;
@@ -38,4 +40,4 @@ http.createServer(async (req, res) => {
     res.statusCode = 404;
     res.end('Not found');
   }
-}).listen(PORT, () => console.log(`RakshaNet on http://localhost:${PORT} (AI ${process.env.ANTHROPIC_API_KEY ? 'on' : 'off: offline rules only'})`));
+}).listen(PORT, () => console.log(`RakshaNet on http://localhost:${PORT} (AI: ${aiProvider() || 'off, offline rules only'})`));

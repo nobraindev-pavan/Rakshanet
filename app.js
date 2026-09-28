@@ -118,6 +118,7 @@ const SAMPLES = [
 ];
 let sampleIdx = 0;
 
+const PROVIDER_NAMES = { anthropic: 'Claude', gemini: 'Gemini' };
 const RISK_TEXT = { high: 'High risk', medium: 'Suspicious', low: 'Low risk' };
 
 function renderResult(r, { pending = false } = {}) {
@@ -126,7 +127,7 @@ function renderResult(r, { pending = false } = {}) {
   badge.textContent = RISK_TEXT[r.risk];
   badge.className = `risk risk-${r.risk}`;
   $('#result-category').textContent = r.categoryLabel;
-  $('#result-source').textContent = r.source === 'ai' ? 'AI analysis by Claude, with offline link checks' : 'Offline rule check (instant, works without internet)';
+  $('#result-source').textContent = r.source === 'ai' ? `AI analysis by ${PROVIDER_NAMES[r.provider] || 'AI'}, with offline link checks` : 'Offline rule check (instant, works without internet)';
   $('#result-summary').textContent = r.summary;
   $('#result-flags').replaceChildren(...(r.redFlags.length ? r.redFlags.map((f) => el('li', {}, f)) : [el('li', { class: 'muted' }, 'No specific warning signs found.')]));
   $('#result-actions').replaceChildren(...r.actions.map((a) => el('li', {}, a)));
@@ -436,7 +437,7 @@ async function draft(e) {
   $('#complaint-wrap').hidden = false;
   $('#complaint-text').value = out.complaint;
   $('#complaint-meta').textContent = [
-    out.source === 'ai' ? 'Drafted by AI. Check every detail before you file it.' : (out.note || 'Standard template.'),
+    out.source === 'ai' ? `Drafted by ${PROVIDER_NAMES[out.provider] || 'AI'}. Check every detail before you file it.` : (out.note || 'Standard template.'),
     `On cybercrime.gov.in choose: ${out.portalSection}.`,
   ].join(' ');
   await record('REPORT', { category: incident.category, amount: incident.amount || undefined, source: out.source, complaintHash: await sha256Hex(out.complaint) });

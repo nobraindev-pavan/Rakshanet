@@ -6,10 +6,10 @@
 
 RakshaNet ("raksha" means protection) is an offline-first web app that helps people in India before, during and after a cyber scam.
 
-- **Scam Check.** Paste any SMS, WhatsApp message, email, link, UPI request or call script. The offline rule engine gives an instant verdict. Then **Claude** adds an AI analysis: the risk level, the scam type, the specific red flags and what to do next.
+- **Scam Check.** Paste any SMS, WhatsApp message, email, link, UPI request or call script. The offline rule engine gives an instant verdict. Then an AI (**Gemini**, free, or **Claude**) adds its analysis: the risk level, the scam type, the specific red flags and what to do next.
 - **Scammed?** A golden-hour emergency guide. It starts with calling **1930**, then walks through blocking your bank and UPI, securing your accounts, warning your contacts and reporting, with a checklist that remembers your progress.
 - **Evidence Vault.** Scam messages, screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit, deletion or reordering is detected. You can sign the vault with your wallet to timestamp it, and export a JSON evidence pack.
-- **Report.** Claude drafts a complaint ready for **cybercrime.gov.in**, using your facts, the suspect IDs and your vault evidence hashes. There's an offline template fallback.
+- **Report.** The AI drafts a complaint ready for **cybercrime.gov.in**, using your facts, the suspect IDs and your vault evidence hashes. There's an offline template fallback.
 
 | Check | Scammed? | Vault | Report |
 |---|---|---|---|
@@ -21,21 +21,28 @@ Demo video: [`docs/media/rakshanet-demo.mp4`](docs/media/rakshanet-demo.mp4). Pi
 
 ```bash
 npm install
-ANTHROPIC_API_KEY=sk-ant-... npm start   # http://localhost:8080, AI on
-npm start                                # offline rules + template only
-npm test                                 # 19 tests: rules, ledger, Claude integration (mocked)
+GEMINI_API_KEY=... npm start        # http://localhost:8080, AI via Gemini (free tier)
+ANTHROPIC_API_KEY=... npm start     # AI via Claude
+npm start                           # offline rules + template only
+npm test                            # 22 tests: rules, ledger, Claude + Gemini integration (mocked)
 ```
 
-**Deploy (Vercel):** import the repo, add `ANTHROPIC_API_KEY` as an environment variable, and deploy. The `api/*.js` files become serverless functions. On any static host without functions, the app still works in offline mode.
+**Deploy (Vercel):** import the repo, add **one** AI key as an environment variable, and deploy. The `api/*.js` files become serverless functions. On any static host without functions, the app still works in offline mode.
 
-Optional: set `RAKSHANET_MODEL` to override the model. The default is `claude-opus-5`.
+| Variable | Purpose |
+|---|---|
+| `GEMINI_API_KEY` | Free key from aistudio.google.com. Uses `gemini-flash-latest`; override with `GEMINI_MODEL`. |
+| `ANTHROPIC_API_KEY` | Claude (paid). Uses `claude-opus-5`; override with `RAKSHANET_MODEL`. |
+| `RAKSHANET_PROVIDER` | Optional: `gemini` or `anthropic` when both keys are set. Otherwise Claude wins. |
+
+On Gemini's free tier, Google may use what users send to improve its products. The app already tells users not to paste passwords or OTPs.
 
 ## How it's built
 
 | Area | Approach |
 |---|---|
 | Rule engine | [`lib/scam-rules.js`](lib/scam-rules.js): 20+ weighted patterns for Indian frauds, including digital arrest, UPI collect/QR, fake KYC, task, investment, sextortion and remote-access scams. Link forensics catch look-alike bank domains, punycode, shorteners, IP hosts, risky TLDs and `@` tricks. It extracts UPI IDs, phones, links, emails and amounts. It runs in the browser and on the server. |
-| AI analysis | [`lib/assistant.js`](lib/assistant.js) + [`api/analyze.js`](api/analyze.js) use the Anthropic SDK with a JSON-schema structured output. Pasted text is fenced in `<received>` tags as untrusted data. Server-side refusal fallback is enabled. Any failure returns the rule-engine result. |
+| AI analysis | [`lib/assistant.js`](lib/assistant.js) + [`api/analyze.js`](api/analyze.js) use the official Google GenAI SDK (Gemini) or Anthropic SDK (Claude) with a JSON-schema structured output. Pasted text is fenced in `<received>` tags as untrusted data. On Claude, server-side refusal fallback is enabled. Any failure, block or truncation returns the rule-engine result. |
 | AI complaint | [`api/complaint.js`](api/complaint.js): facts-only drafting with `<placeholders>` for anything missing. [`lib/complaint.js`](lib/complaint.js) is the offline template. |
 | Evidence Vault | [`lib/ledger.js`](lib/ledger.js): canonical JSON, WebCrypto SHA-256 and `prevHash` links. `verifyChain()` pinpoints the first broken record. Files are hashed locally, never uploaded. EIP-1193 `personal_sign` anchors the vault head. |
 | App | Plain HTML, CSS and ES modules as an installable PWA, with no framework. The service worker makes the rules, checklist and vault work offline. |
@@ -48,7 +55,7 @@ index.html, styles.css, app.js     UI (Check, Scammed?, Vault, Report)
 lib/scam-rules.js                  offline scam + link analysis (browser + server)
 lib/ledger.js                      hash-chained evidence vault
 lib/complaint.js                   complaint template
-lib/assistant.js                   Claude integration (server only)
+lib/assistant.js                   Gemini / Claude integration (server only)
 api/analyze.js, api/complaint.js   serverless endpoints (Vercel)
 server.js                          local dev server (static + /api)
 test/                              node:test suites
