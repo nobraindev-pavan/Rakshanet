@@ -2,56 +2,61 @@
 
 # RakshaNet
 
-**Protection in seconds. Evidence nobody can quietly edit.**
+**Your shield against cyber fraud.** Check it. Act fast. Keep proof. Report.
 
-RakshaNet ("raksha" means protection) is an installable, offline-first safety web app with three features:
+RakshaNet ("raksha" means protection) is an offline-first web app that helps people in India before, during and after a cyber scam.
 
-- **Hold-to-SOS.** Hold for 1.5 seconds (no misfires) to capture your live GPS location and a note. The alert is ready to send by SMS to all your guardians, by WhatsApp, through the share sheet, or as a call to 112.
-- **Safe Walk.** Set a timer for your trip. Tap *I'm safe* when you arrive. If you don't, RakshaNet fires an SOS for you.
-- **Evidence Ledger.** Every alert and check-in is SHA-256 hashed and chained to the one before it, so any edit, deletion or reordering is detected. You can sign the latest hash with your wallet (EIP-1193 `personal_sign`) to prove when the evidence existed.
+- **Scam Check.** Paste any SMS, WhatsApp message, email, link, UPI request or call script. The offline rule engine gives an instant verdict. Then **Claude** adds an AI analysis: the risk level, the scam type, the specific red flags and what to do next.
+- **Scammed?** A golden-hour emergency guide. It starts with calling **1930**, then walks through blocking your bank and UPI, securing your accounts, warning your contacts and reporting, with a checklist that remembers your progress.
+- **Evidence Vault.** Scam messages, screenshots and UTR IDs are fingerprinted with SHA-256 and hash-chained, so any edit, deletion or reordering is detected. You can sign the vault with your wallet to timestamp it, and export a JSON evidence pack.
+- **Report.** Claude drafts a complaint ready for **cybercrime.gov.in**, using your facts, the suspect IDs and your vault evidence hashes. There's an offline template fallback.
 
-It also has a **Safety Map** that lists police stations and hospitals within 3 km, using OpenStreetMap data.
-
-| SOS | Alert | Safe Walk | Ledger |
+| Check | Scammed? | Vault | Report |
 |---|---|---|---|
-| ![](docs/screenshots/sos.png) | ![](docs/screenshots/sos-alert.png) | ![](docs/screenshots/safe-walk.png) | ![](docs/screenshots/ledger-tamper.png) |
+| ![](docs/screenshots/check-result.png) | ![](docs/screenshots/scammed.png) | ![](docs/screenshots/vault.png) | ![](docs/screenshots/report.png) |
 
-Demo video: [`docs/media/rakshanet-demo.mp4`](docs/media/rakshanet-demo.mp4). Pitch deck: [`docs/RakshaNet-Pitch-Deck.pptx`](docs/RakshaNet-Pitch-Deck.pptx).
+Demo video: [`docs/media/rakshanet-demo.mp4`](docs/media/rakshanet-demo.mp4). Pitch deck: [`docs/RakshaNet-Pitch-Deck.pptx`](docs/RakshaNet-Pitch-Deck.pptx). The screenshots and video show offline mode.
 
 ## Run it
 
-The app has no build step and no dependencies.
-
 ```bash
-npm start      # serves on http://localhost:8080
-npm test       # ledger unit tests (Node 20+)
+npm install
+ANTHROPIC_API_KEY=sk-ant-... npm start   # http://localhost:8080, AI on
+npm start                                # offline rules + template only
+npm test                                 # 19 tests: rules, ledger, Claude integration (mocked)
 ```
 
-To deploy, push the repo to any static host (Vercel, Netlify or GitHub Pages). Geolocation and the service worker need HTTPS.
+**Deploy (Vercel):** import the repo, add `ANTHROPIC_API_KEY` as an environment variable, and deploy. The `api/*.js` files become serverless functions. On any static host without functions, the app still works in offline mode.
+
+Optional: set `RAKSHANET_MODEL` to override the model. The default is `claude-opus-5`.
 
 ## How it's built
 
 | Area | Approach |
 |---|---|
-| App | Plain HTML, CSS and ES modules, about 40 KB of code. Hash-based routing. Mobile-first, with dark and light mode and support for reduced motion. |
-| Offline | A service worker serves the app shell network-first with a cache fallback, so SOS, Safe Walk and the ledger work with no signal. |
-| Ledger | [`lib/ledger.js`](lib/ledger.js): canonical JSON, WebCrypto SHA-256, `prevHash` links, and `verifyChain()` pinpoints the first broken record. Writes are queued so the chain can't fork. |
-| Wallet | Any EIP-1193 wallet signs `RakshaNet evidence anchor / Head: <hash>`. The signature is itself recorded in the ledger. |
-| Map | Leaflet is bundled in `vendor/` and loaded only when the Map tab opens. Nearby places come from the Overpass API. |
-| Privacy | There is no server. Data stays in `localStorage` on your device until you choose to send an alert. |
+| Rule engine | [`lib/scam-rules.js`](lib/scam-rules.js): 20+ weighted patterns for Indian frauds, including digital arrest, UPI collect/QR, fake KYC, task, investment, sextortion and remote-access scams. Link forensics catch look-alike bank domains, punycode, shorteners, IP hosts, risky TLDs and `@` tricks. It extracts UPI IDs, phones, links, emails and amounts. It runs in the browser and on the server. |
+| AI analysis | [`lib/assistant.js`](lib/assistant.js) + [`api/analyze.js`](api/analyze.js) use the Anthropic SDK with a JSON-schema structured output. Pasted text is fenced in `<received>` tags as untrusted data. Server-side refusal fallback is enabled. Any failure returns the rule-engine result. |
+| AI complaint | [`api/complaint.js`](api/complaint.js): facts-only drafting with `<placeholders>` for anything missing. [`lib/complaint.js`](lib/complaint.js) is the offline template. |
+| Evidence Vault | [`lib/ledger.js`](lib/ledger.js): canonical JSON, WebCrypto SHA-256 and `prevHash` links. `verifyChain()` pinpoints the first broken record. Files are hashed locally, never uploaded. EIP-1193 `personal_sign` anchors the vault head. |
+| App | Plain HTML, CSS and ES modules as an installable PWA, with no framework. The service worker makes the rules, checklist and vault work offline. |
+| Privacy | No accounts and no database. Data lives in `localStorage` on your device. Text goes to the AI only when you press **Check it** or **Draft complaint**. |
 
 ## Project layout
 
 ```
-index.html, styles.css, app.js   UI
-lib/ledger.js                    hash-chained ledger (browser + Node)
-test/ledger.test.js              unit tests
-sw.js, manifest.webmanifest      PWA / offline
-assets/                          logo (SVG, 512 and 1024 px PNG)
-docs/                            registration kit, pitch deck, screenshots, demo video
-vendor/leaflet/                  Leaflet 1.9.4 (BSD-2-Clause)
+index.html, styles.css, app.js     UI (Check, Scammed?, Vault, Report)
+lib/scam-rules.js                  offline scam + link analysis (browser + server)
+lib/ledger.js                      hash-chained evidence vault
+lib/complaint.js                   complaint template
+lib/assistant.js                   Claude integration (server only)
+api/analyze.js, api/complaint.js   serverless endpoints (Vercel)
+server.js                          local dev server (static + /api)
+test/                              node:test suites
+docs/                              registration kit, pitch deck, screenshots, demo video
 ```
 
 ## Hackathon
 
 Built for Async'26. Copy-paste answers for the registration form are in [`docs/REGISTRATION.md`](docs/REGISTRATION.md).
+
+In an emergency, call **1930** (National Cyber Crime Helpline) or report at **cybercrime.gov.in**.

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>RakshaNet: SOS Safety Network</title>
-  <meta name="description" content="One-tap SOS, safe-walk check-ins and a tamper-evident incident ledger you can anchor with your wallet.">
+  <title>RakshaNet: Cyber Fraud Shield</title>
+  <meta name="description" content="Check suspicious messages and links with AI, get step-by-step help after a cyber fraud, keep tamper-evident evidence and draft your cybercrime complaint.">
   <meta name="theme-color" content="#0f1115">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -13,133 +13,158 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#sos" aria-label="RakshaNet home">
+    <a class="brand" href="#check" aria-label="RakshaNet home">
       <img src="assets/logo.svg" alt="" width="32" height="32">
       <span>Raksha<b>Net</b></span>
     </a>
     <div class="topbar-actions">
-      <span id="net-status" class="pill" title="Connection status">Online</span>
-      <button id="wallet-btn" class="btn btn-ghost btn-sm" type="button">Connect wallet</button>
+      <a class="btn btn-danger btn-sm nowrap" href="tel:1930" title="National Cyber Crime Helpline">Call 1930</a>
     </div>
   </header>
 
   <main id="main">
-    <!-- SOS -->
-    <section id="view-sos" class="view" data-view="sos">
-      <div class="sos-wrap">
-        <p class="eyebrow">Emergency</p>
-        <h1>Hold to send SOS</h1>
-        <p class="muted">Hold the button for 1.5 seconds. Your live location goes to your guardians and the alert is sealed into your evidence ledger.</p>
-        <button id="sos-btn" class="sos-btn" type="button" aria-describedby="sos-hint">
-          <svg class="sos-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56"></circle></svg>
-          <span class="sos-label">SOS</span>
-        </button>
-        <p id="sos-hint" class="hint">Keyboard: focus and hold Space or Enter</p>
-        <label class="field">
-          <span>Optional note (who, what, where)</span>
-          <input id="sos-note" type="text" maxlength="200" placeholder="e.g. Being followed near MG Road metro">
-        </label>
-        <div class="quick-row">
-          <a class="btn btn-outline" href="tel:112">Call 112</a>
-          <a class="btn btn-outline" href="tel:1091">Women helpline 1091</a>
+    <!-- CHECK -->
+    <section class="view" data-view="check">
+      <p class="eyebrow">Scam Check</p>
+      <h1>Is this a scam?</h1>
+      <p class="muted">Paste a message, email, link, UPI request or what a caller told you. You get an instant offline check, then an AI analysis.</p>
+      <form id="check-form" class="card">
+        <div class="chips" role="radiogroup" aria-label="Where did you get it?">
+          <button class="chip is-active" type="button" data-channel="sms" role="radio" aria-checked="true">SMS</button>
+          <button class="chip" type="button" data-channel="whatsapp" role="radio" aria-checked="false">WhatsApp</button>
+          <button class="chip" type="button" data-channel="call" role="radio" aria-checked="false">Phone call</button>
+          <button class="chip" type="button" data-channel="email" role="radio" aria-checked="false">Email</button>
+          <button class="chip" type="button" data-channel="social" role="radio" aria-checked="false">Social / Telegram</button>
+          <button class="chip" type="button" data-channel="link" role="radio" aria-checked="false">Just a link</button>
         </div>
-        <p id="guardian-summary" class="muted small"></p>
+        <label class="field">
+          <span>Message, link or call details</span>
+          <textarea id="check-text" rows="6" maxlength="8000" required placeholder="e.g. Dear customer, your SBI account will be blocked today. Update KYC now: http://sbi-kyc-update.xyz"></textarea>
+        </label>
+        <div class="row">
+          <button class="btn btn-primary" type="submit">Check it</button>
+          <button id="check-sample" class="btn btn-ghost" type="button">Try a sample</button>
+        </div>
+        <p class="muted small">Your text goes to the AI only when you press Check. Don't paste passwords or OTPs.</p>
+      </form>
+
+      <article id="result" class="card result" hidden aria-live="polite">
+        <div class="result-head">
+          <span id="risk-badge" class="risk"></span>
+          <div>
+            <h2 id="result-category"></h2>
+            <p id="result-source" class="muted small"></p>
+          </div>
+        </div>
+        <p id="result-summary" class="lead"></p>
+        <div id="ai-status" class="status"></div>
+        <h3>Warning signs</h3>
+        <ul id="result-flags" class="bullets flags"></ul>
+        <h3>What to do now</h3>
+        <ol id="result-actions" class="bullets"></ol>
+        <div id="result-indicators-wrap" hidden>
+          <h3>Suspect details found</h3>
+          <div id="result-indicators" class="tags"></div>
+        </div>
+        <div class="row">
+          <button id="result-save" class="btn btn-outline" type="button">Save to Evidence Vault</button>
+          <button id="result-report" class="btn btn-primary" type="button">Report this</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- SCAMMED -->
+    <section class="view" data-view="help" hidden>
+      <p class="eyebrow">Emergency</p>
+      <h1>Lost money or got hacked?</h1>
+      <div class="alert-card">
+        <p><b>Act within the golden hour.</b> The sooner fraud is reported to 1930, the better the chance that the money can be frozen in the scammer's account before it moves on.</p>
+        <div class="row">
+          <a class="btn btn-danger btn-lg" href="tel:1930">Call 1930 now</a>
+          <a class="btn btn-outline btn-lg" href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in</a>
+        </div>
+      </div>
+      <h2 class="section-title">Your recovery checklist <span id="checklist-progress" class="muted small"></span></h2>
+      <ol id="checklist" class="checklist"></ol>
+      <div class="card">
+        <h3>Warn your contacts</h3>
+        <p class="muted small">If your WhatsApp, Instagram or email was taken over, scammers will message your friends next.</p>
+        <pre id="warn-text" class="message"></pre>
+        <div class="row">
+          <button id="warn-share" class="btn btn-primary" type="button">Share warning</button>
+          <button id="warn-copy" class="btn btn-outline" type="button">Copy</button>
+        </div>
       </div>
     </section>
 
-    <!-- SAFE WALK -->
-    <section id="view-walk" class="view" data-view="walk" hidden>
-      <p class="eyebrow">Safe Walk</p>
-      <h1>Check in or we raise the alarm</h1>
-      <p class="muted">Start a timer before you head out. If you don't tap <b>I'm safe</b> before it runs out, RakshaNet sends an SOS for you.</p>
-      <div id="walk-setup" class="card">
+    <!-- VAULT -->
+    <section class="view" data-view="vault" hidden>
+      <p class="eyebrow">Evidence Vault</p>
+      <h1>Evidence nobody can quietly edit</h1>
+      <p class="muted">Scam messages, screenshots and transaction IDs are fingerprinted with SHA-256 and chained together. Change one byte of any record and verification fails. Sign the latest fingerprint with your wallet to prove when you had the evidence.</p>
+      <form id="evidence-form" class="card">
         <label class="field">
-          <span>Where are you going?</span>
-          <input id="walk-dest" type="text" maxlength="120" placeholder="e.g. Home, via Indiranagar 12th Main">
+          <span>What is this?</span>
+          <input id="ev-label" type="text" maxlength="120" required placeholder="e.g. Payment screenshot, UTR 4123 5678 9012">
         </label>
-        <div class="chips" role="group" aria-label="Duration">
-          <button class="chip" type="button" data-min="5">5 min</button>
-          <button class="chip is-active" type="button" data-min="15">15 min</button>
-          <button class="chip" type="button" data-min="30">30 min</button>
-          <button class="chip" type="button" data-min="60">60 min</button>
-        </div>
-        <button id="walk-start" class="btn btn-primary btn-block" type="button">Start Safe Walk</button>
-      </div>
-      <div id="walk-active" class="card walk-active" hidden>
-        <p class="muted small" id="walk-dest-label"></p>
-        <div id="walk-timer" class="walk-timer" role="timer" aria-live="off">15:00</div>
-        <div class="progress"><div id="walk-progress"></div></div>
-        <div class="quick-row">
-          <button id="walk-safe" class="btn btn-safe" type="button">I'm safe</button>
-          <button id="walk-extend" class="btn btn-outline" type="button">+5 min</button>
-          <button id="walk-panic" class="btn btn-danger" type="button">SOS now</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- LEDGER -->
-    <section id="view-ledger" class="view" data-view="ledger" hidden>
-      <p class="eyebrow">Evidence Ledger</p>
-      <h1>Tamper-evident incident log</h1>
-      <p class="muted">Every alert and check-in is SHA-256 hashed and linked to the previous record. Change one byte anywhere and verification fails. Sign the latest hash with your wallet to prove when it existed.</p>
+        <label class="field">
+          <span>Notes, message text or transaction IDs (optional)</span>
+          <textarea id="ev-text" rows="3" maxlength="4000"></textarea>
+        </label>
+        <label class="field">
+          <span>Screenshot or file (optional, only its fingerprint is stored)</span>
+          <input id="ev-file" type="file" accept="image/*,application/pdf,.txt,.eml">
+        </label>
+        <button class="btn btn-primary" type="submit">Seal evidence</button>
+      </form>
       <div class="toolbar">
-        <button id="ledger-verify" class="btn btn-primary btn-sm" type="button">Verify chain</button>
-        <button id="ledger-anchor" class="btn btn-outline btn-sm" type="button">Sign head with wallet</button>
+        <button id="ledger-verify" class="btn btn-primary btn-sm" type="button">Verify vault</button>
+        <button id="ledger-anchor" class="btn btn-outline btn-sm" type="button">Sign with wallet</button>
+        <button id="wallet-btn" class="btn btn-ghost btn-sm" type="button">Connect wallet</button>
         <button id="ledger-tamper" class="btn btn-ghost btn-sm" type="button">Run tamper test</button>
-        <button id="ledger-export" class="btn btn-ghost btn-sm" type="button">Export JSON</button>
+        <button id="ledger-export" class="btn btn-ghost btn-sm" type="button">Export evidence pack</button>
       </div>
       <div id="ledger-status" class="status" role="status" aria-live="polite"></div>
       <ol id="ledger-list" class="ledger" reversed></ol>
     </section>
 
-    <!-- GUARDIANS -->
-    <section id="view-guardians" class="view" data-view="guardians" hidden>
-      <p class="eyebrow">Guardians</p>
-      <h1>Who gets your alerts</h1>
-      <form id="guardian-form" class="card form-grid" autocomplete="off">
-        <label class="field">
-          <span>Your name (shown in alerts)</span>
-          <input id="me-name" type="text" maxlength="60" placeholder="Your name">
-        </label>
-        <label class="field">
-          <span>Guardian name</span>
-          <input id="g-name" type="text" maxlength="60" required placeholder="e.g. Amma">
-        </label>
-        <label class="field">
-          <span>Phone with country code</span>
-          <input id="g-phone" type="tel" inputmode="tel" maxlength="20" required placeholder="+91 98xxxxxxxx" pattern="\+?[0-9 \(\)\-]{7,20}">
-        </label>
-        <button class="btn btn-primary" type="submit">Add guardian</button>
+    <!-- REPORT -->
+    <section class="view" data-view="report" hidden>
+      <p class="eyebrow">Report</p>
+      <h1>Draft your cybercrime complaint</h1>
+      <p class="muted">Fill in what you know. The AI writes a clear complaint for <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in</a> or your police cyber cell and attaches your vault evidence.</p>
+      <form id="report-form" class="card form-grid" autocomplete="on">
+        <label class="field"><span>Your full name</span><input id="r-name" name="name" autocomplete="name" maxlength="80"></label>
+        <label class="field"><span>Phone</span><input id="r-phone" name="tel" type="tel" autocomplete="tel" maxlength="20"></label>
+        <label class="field"><span>Email</span><input id="r-email" name="email" type="email" autocomplete="email" maxlength="100"></label>
+        <label class="field"><span>City / police station</span><input id="r-city" maxlength="80"></label>
+        <label class="field"><span>Type of fraud</span><select id="r-category"></select></label>
+        <label class="field"><span>When did it happen?</span><input id="r-when" type="datetime-local"></label>
+        <label class="field"><span>Amount lost (₹, if any)</span><input id="r-amount" inputmode="decimal" maxlength="15" placeholder="0"></label>
+        <label class="field"><span>Transaction / UTR IDs</span><input id="r-txns" maxlength="200" placeholder="Comma separated"></label>
+        <label class="field span-2"><span>Suspect phone numbers, UPI IDs, links, emails</span><input id="r-suspect" maxlength="500" placeholder="Filled in from your scam check"></label>
+        <label class="field span-2"><span>What happened, in order</span><textarea id="r-desc" rows="5" maxlength="4000" required></textarea></label>
+        <label class="check span-2"><input id="r-attach" type="checkbox" checked> Attach my Evidence Vault records (<span id="r-evcount">0</span>)</label>
+        <button class="btn btn-primary span-2" type="submit">Draft complaint</button>
       </form>
-      <ul id="guardian-list" class="guardians"></ul>
-    </section>
-
-    <!-- MAP -->
-    <section id="view-map" class="view" data-view="map" hidden>
-      <p class="eyebrow">Safety Map</p>
-      <h1>Nearest help</h1>
-      <p class="muted">Police stations and hospitals within 3 km of you, from OpenStreetMap, plus your recorded alerts.</p>
-      <div id="map" class="map" aria-label="Map of nearby help"></div>
-      <div id="map-status" class="status" role="status" aria-live="polite"></div>
-      <ul id="help-list" class="help-list"></ul>
+      <div id="complaint-wrap" class="card" hidden>
+        <p id="complaint-meta" class="muted small"></p>
+        <textarea id="complaint-text" class="message" rows="18" aria-label="Complaint draft"></textarea>
+        <div class="row">
+          <button id="complaint-copy" class="btn btn-primary" type="button">Copy</button>
+          <button id="complaint-download" class="btn btn-outline" type="button">Download .txt</button>
+          <a class="btn btn-outline" href="https://cybercrime.gov.in" target="_blank" rel="noopener">Open portal</a>
+        </div>
+      </div>
     </section>
   </main>
 
   <nav class="tabbar" aria-label="Sections">
-    <a href="#sos" data-tab="sos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 10 5.2-.6 9-5 9-10V6l-9-4Zm-1 5h2v6h-2V7Zm0 8h2v2h-2v-2Z"/></svg>SOS</a>
-    <a href="#walk" data-tab="walk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.4l4 2.4-.8 1.3L11 13V7h2Z"/></svg>Safe Walk</a>
-    <a href="#ledger" data-tab="ledger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 3h7v2h-7v-2Zm0-3h7v2h-7v-2Zm0 6h7v2h-7v-2Z"/></svg>Ledger</a>
-    <a href="#guardians" data-tab="guardians"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20c0-3.3 3.1-6 7-6s7 2.7 7 6H2Zm15 0c0-1.8-.6-3.4-1.7-4.6 3.3.2 5.7 2.3 5.7 4.6h-4Z"/></svg>Guardians</a>
-    <a href="#map" data-tab="map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>Map</a>
+    <a href="#check" data-tab="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2Zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm-1 2h2v5H9V6Zm0 6h2v2H9v-2Z"/></svg>Check</a>
+    <a href="#help" data-tab="help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 10 5.2-.6 9-5 9-10V6l-9-4Zm-1 5h2v6h-2V7Zm0 8h2v2h-2v-2Z"/></svg>Scammed?</a>
+    <a href="#vault" data-tab="vault"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1a5 5 0 0 1 5 5v3h2v13H5V9h2V6a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v3h6V6a3 3 0 0 0-3-3Zm-1 10v4h2v-4h-2Z"/></svg>Vault</a>
+    <a href="#report" data-tab="report"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2Zm8 1.5V8h4.5L14 3.5ZM8 11v2h10v-2H8Zm0 4v2h10v-2H8Zm0-8v2h4V7H8Z"/></svg>Report</a>
   </nav>
-
-  <dialog id="alert-dialog" class="dialog" aria-labelledby="alert-title">
-    <h2 id="alert-title">SOS recorded</h2>
-    <p id="alert-meta" class="muted small"></p>
-    <pre id="alert-message" class="message"></pre>
-    <div id="alert-actions" class="dialog-actions"></div>
-    <button id="alert-close" class="btn btn-ghost btn-block" type="button">Close</button>
-  </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body>

@@ -1,8 +1,8 @@
 {
   "name": "RakshaNet",
   "short_name": "RakshaNet",
-  "description": "One-tap SOS, Safe Walk check-ins and a tamper-evident incident ledger.",
-  "start_url": "./#sos",
+  "description": "AI scam checker, cyber-fraud emergency guide, tamper-evident evidence vault and complaint drafter.",
+  "start_url": "./#check",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0f1115",
