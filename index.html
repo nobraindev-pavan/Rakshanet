@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>RakshaNet: Cyber Fraud Shield</title>
   <meta name="description" content="Check suspicious messages and links with AI, get step-by-step help after a cyber fraud, keep tamper-evident evidence and draft your cybercrime complaint.">
-  <meta name="theme-color" content="#0f1115">
+  <meta name="theme-color" content="#060a1a">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
@@ -26,7 +26,7 @@
     <!-- CHECK -->
     <section class="view" data-view="check">
       <p class="eyebrow">Scam Check</p>
-      <h1>Is this a scam?</h1>
+      <h1>Is this a <span class="grad">scam?</span></h1>
       <p class="muted">Paste a message, email, link, UPI request or what a caller told you. You get an instant offline check, then an AI analysis.</p>
       <form id="check-form" class="card">
         <div class="chips" role="radiogroup" aria-label="Where did you get it?">
@@ -50,11 +50,34 @@
 
       <article id="result" class="card result" hidden aria-live="polite">
         <div class="result-head">
-          <span id="risk-badge" class="risk"></span>
-          <div>
-            <h2 id="result-category"></h2>
-            <p id="result-source" class="muted small"></p>
+          <div id="risk-meter" class="meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Scam risk meter">
+            <svg viewBox="0 0 200 116" aria-hidden="true">
+              <defs>
+                <linearGradient id="meter-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#22c55e"/>
+                  <stop offset="0.5" stop-color="#fbbf24"/>
+                  <stop offset="1" stop-color="#ff4d6d"/>
+                </linearGradient>
+              </defs>
+              <path class="meter-track" d="M20 100 A80 80 0 0 1 180 100" pathLength="100"/>
+              <path id="meter-fill" class="meter-fill" d="M20 100 A80 80 0 0 1 180 100" pathLength="100"/>
+              <g class="meter-ticks">
+                <line x1="100" y1="8" x2="100" y2="16"/>
+                <line x1="34.9" y1="34.9" x2="40.6" y2="40.6"/>
+                <line x1="165.1" y1="34.9" x2="159.4" y2="40.6"/>
+              </g>
+              <text class="meter-scale" x="20" y="114" text-anchor="middle">SAFE</text>
+              <text class="meter-scale" x="180" y="114" text-anchor="middle">SCAM</text>
+              <g id="meter-needle" class="meter-needle">
+                <line x1="100" y1="100" x2="100" y2="38"/>
+                <circle cx="100" cy="100" r="8"/>
+              </g>
+            </svg>
           </div>
+          <div class="meter-readout-row"><b id="meter-value" class="meter-number">0</b><small class="muted">/100 risk</small></div>
+          <span id="risk-badge" class="risk"></span>
+          <h2 id="result-category"></h2>
+          <p id="result-source" class="muted small"></p>
         </div>
         <p id="result-summary" class="lead"></p>
         <div id="ai-status" class="status"></div>
@@ -100,7 +123,7 @@
     <!-- VAULT -->
     <section class="view" data-view="vault" hidden>
       <p class="eyebrow">Evidence Vault</p>
-      <h1>Evidence nobody can quietly edit</h1>
+      <h1>Evidence nobody can <span class="grad">quietly edit</span></h1>
       <p class="muted">Scam messages, screenshots and transaction IDs are fingerprinted with SHA-256 and chained together. Change one byte of any record and verification fails. Sign the latest fingerprint with your wallet to prove when you had the evidence.</p>
       <form id="evidence-form" class="card">
         <label class="field">
@@ -131,7 +154,7 @@
     <!-- REPORT -->
     <section class="view" data-view="report" hidden>
       <p class="eyebrow">Report</p>
-      <h1>Draft your cybercrime complaint</h1>
+      <h1>Draft your <span class="grad">cybercrime complaint</span></h1>
       <p class="muted">Fill in what you know. The AI writes a clear complaint for <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in</a> or your police cyber cell and attaches your vault evidence.</p>
       <form id="report-form" class="card form-grid" autocomplete="on">
         <label class="field"><span>Your full name</span><input id="r-name" name="name" autocomplete="name" maxlength="80"></label>

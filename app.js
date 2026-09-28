@@ -121,8 +121,52 @@ let sampleIdx = 0;
 const PROVIDER_NAMES = { anthropic: 'Claude', gemini: 'Gemini' };
 const RISK_TEXT = { high: 'High risk', medium: 'Suspicious', low: 'Low risk' };
 
+// Meter position always agrees with the risk label: each level owns a band of
+// the dial, and the rule score places the needle within that band.
+const BANDS = { low: [0, 34, 0, 19], medium: [35, 69, 20, 49], high: [70, 100, 50, 100] };
+function meterValue(r) {
+  const [lo, hi, sLo, sHi] = BANDS[r.risk];
+  const s = Number(r.score) || 0;
+  const t = s >= sLo && s <= sHi ? (s - sLo) / (sHi - sLo) : 0.5;
+  return Math.round(lo + t * (hi - lo));
+}
+
+let meterAnim = 0;
+function renderMeter(r) {
+  const value = meterValue(r);
+  const meter = $('#risk-meter');
+  meter.style.setProperty('--v', value);
+  meter.style.setProperty('--deg', `${-90 + value * 1.8}deg`);
+  meter.setAttribute('aria-valuenow', value);
+  meter.setAttribute('aria-valuetext', `${RISK_TEXT[r.risk]}, ${value} out of 100`);
+
+  const out = $('#meter-value');
+  const from = Number(out.textContent) || 0;
+  cancelAnimationFrame(meterAnim);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { out.textContent = value; return; }
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / 900);
+    out.textContent = Math.round(from + (value - from) * (1 - (1 - t) ** 3));
+    if (t < 1) meterAnim = requestAnimationFrame(step);
+  };
+  meterAnim = requestAnimationFrame(step);
+}
+
 function renderResult(r, { pending = false } = {}) {
-  $('#result').hidden = false;
+  const card = $('#result');
+  const wasHidden = card.hidden;
+  card.hidden = false;
+  card.classList.remove('is-high', 'is-medium', 'is-low');
+  card.classList.add(`is-${r.risk}`);
+  if (wasHidden) {
+    // Start from zero so the needle visibly sweeps up on the first result.
+    $('#risk-meter').style.setProperty('--v', 0);
+    $('#risk-meter').style.setProperty('--deg', '-90deg');
+    $('#meter-value').textContent = '0';
+    void card.offsetWidth;
+  }
+  renderMeter(r);
   const badge = $('#risk-badge');
   badge.textContent = RISK_TEXT[r.risk];
   badge.className = `risk risk-${r.risk}`;
